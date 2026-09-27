@@ -1,180 +1,276 @@
-"use client"
+"use client";
+import { useState, type FormEvent } from "react";
+import {
+  ArrowRight,
+  BookOpen,
+  Building2,
+  Plus,
+  RotateCcw,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  DEFAULT_PARAMETERS,
+  validateParameters,
+  type Parameters,
+} from "@/lib/scheduler";
 
-import React, { useState, type ChangeEvent, type FormEvent } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { X } from "lucide-react"
-import { UserGuideCard } from "@/components/user-guide-card"
-
-export function ParameterForm() {
-  const [subjects, setSubjects] = useState<string[]>([])
-  const [newSubject, setNewSubject] = useState("")
-  const [parameters, setParameters] = useState({
-    classrooms: "",
-    batches: "",
-    maxClassesPerDay: "",
-    semester: "",
-    department: "",
-  })
-  const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setParameters({ ...parameters, [name]: value })
-  }
-
-  const addSubject = () => {
-    if (newSubject.trim() && !subjects.includes(newSubject.trim())) {
-      setSubjects([...subjects, newSubject.trim()])
-      setNewSubject("")
+type Props = {
+  value: Parameters;
+  onChange: (value: Parameters) => void;
+  onGenerate: () => void;
+  disabled?: boolean;
+};
+export function ParameterForm({
+  value,
+  onChange,
+  onGenerate,
+  disabled,
+}: Props) {
+  const [subject, setSubject] = useState("");
+  const [error, setError] = useState("");
+  const update = (patch: Partial<Parameters>) => {
+    setError("");
+    onChange({ ...value, ...patch });
+  };
+  const add = () => {
+    const name = subject.trim().replace(/\s+/g, " ");
+    if (!name) {
+      setError("Enter a subject name before adding it.");
+      return;
     }
-  }
-
-  const removeSubject = (subjectToRemove: string) => {
-    // The parameter 's' now has an explicit type 'string'
-    setSubjects(subjects.filter((s: string) => s !== subjectToRemove))
-  }
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setMessage(null)
-
-    // Validate required fields
-    if (!parameters.department.trim()) {
-      setError("Department is required")
-      return
+    if (value.subjects.length >= 40) {
+      setError("You can add up to 40 subjects.");
+      return;
     }
-    if (!parameters.semester.trim()) {
-      setError("Semester is required")
-      return
+    if (value.subjects.some((s) => s.toLowerCase() === name.toLowerCase())) {
+      setError("That subject is already in your list.");
+      return;
     }
-    if (!parameters.classrooms.trim() || parseInt(parameters.classrooms) <= 0) {
-      setError("Please enter a valid number of classrooms")
-      return
+    update({ subjects: [...value.subjects, name] });
+    setSubject("");
+  };
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (subject.trim()) {
+      setError(
+        "Add your typed subject to the list, or clear the field before generating.",
+      );
+      return;
     }
-    if (!parameters.batches.trim() || parseInt(parameters.batches) <= 0) {
-      setError("Please enter a valid number of batches")
-      return
+    const message = validateParameters(value);
+    if (message) {
+      setError(message);
+      return;
     }
-    if (!parameters.maxClassesPerDay.trim() || parseInt(parameters.maxClassesPerDay) <= 0) {
-      setError("Please enter a valid maximum classes per day")
-      return
-    }
-    if (subjects.length === 0) {
-      setError("Please add at least one subject")
-      return
-    }
-
-    // --- This is the missing logic ---
-    // You would send the data to your backend here.
-    // Example:
-    /*
-    try {
-      const response = await fetch('http://localhost:5000/api/parameters', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Include auth token if required
-          // 'Authorization': `Bearer ${your_auth_token}`
-        },
-        body: JSON.stringify({ ...parameters, subjects }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit parameters');
-      }
-
-      const result = await response.json();
-      setMessage('Parameters submitted successfully!');
-      console.log("Server response:", result);
-
-    } catch (err: any) {
-      setError(err.message);
-    }
-    */
-    console.log("Parameters submitted:", { ...parameters, subjects })
-    setMessage("Parameters submitted successfully (logged to console).")
-  }
-
+    setError("");
+    onGenerate();
+  };
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Scheduling Parameters</h2>
-        <p className="text-muted-foreground">Set the parameters for generating the class schedule. Please fill in all the details below to create your custom timetable.</p>
-      </div>
-
-      <UserGuideCard />
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>General Parameters</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="department">Department *</Label>
-              <Input id="department" name="department" value={parameters.department} onChange={handleInputChange} placeholder="e.g., Computer Science" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="semester">Semester *</Label>
-              <Input id="semester" name="semester" value={parameters.semester} onChange={handleInputChange} placeholder="e.g., 5th" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="classrooms">Number of Classrooms *</Label>
-              <Input id="classrooms" name="classrooms" type="number" value={parameters.classrooms} onChange={handleInputChange} placeholder="e.g., 10" min="1" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="batches">Number of Batches *</Label>
-              <Input id="batches" name="batches" type="number" value={parameters.batches} onChange={handleInputChange} placeholder="e.g., 4" min="1" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="maxClassesPerDay">Max Classes per Day *</Label>
-              <Input id="maxClassesPerDay" name="maxClassesPerDay" type="number" value={parameters.maxClassesPerDay} onChange={handleInputChange} placeholder="e.g., 6" min="1" max="12" required />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Subjects *</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Input
-                value={newSubject}
-                onChange={(e) => setNewSubject(e.target.value)}
-                placeholder="Add a new subject"
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubject(); } }}
-              />
-              <Button type="button" onClick={addSubject}>Add</Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {subjects.length > 0 ? (
-                subjects.map((subject) => (
-                  <div key={subject} className="flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-sm text-secondary-foreground">
-                    {subject}
-                    <button type="button" onClick={() => removeSubject(subject)} className="rounded-full hover:bg-destructive/80">
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">No subjects added yet. Add subjects using the input field above.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end">
-          <Button type="submit">Generate Schedule</Button>
+    <form onSubmit={submit} className="space-y-5">
+      <section className="panel">
+        <div className="flex items-center gap-3 border-b px-6 py-5">
+          <span className="rounded-lg bg-violet-50 p-2 text-primary">
+            <Building2 className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="font-semibold">Academic details</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              The foundation for your weekly timetable
+            </p>
+          </div>
+          <span className="ml-auto text-xs text-muted-foreground">01</span>
         </div>
-        {message && <p className="text-sm text-green-600">{message}</p>}
-        {error && <p className="text-sm text-red-600">{error}</p>}
-      </form>
-    </div>
-  )
+        <div className="grid gap-5 p-6 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="department">Department</Label>
+            <input
+              id="department"
+              className="field"
+              required
+              maxLength={80}
+              placeholder="e.g. Computer Science"
+              value={value.department}
+              onChange={(e) => update({ department: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="semester">Semester</Label>
+            <select
+              id="semester"
+              className="field"
+              value={value.semester}
+              onChange={(e) => update({ semester: e.target.value })}
+            >
+              {Array.from({ length: 12 }, (_, i) => (
+                <option value={i + 1} key={i}>
+                  Semester {i + 1}
+                </option>
+              ))}
+            </select>
+          </div>
+          {(
+            [
+              {
+                key: "classrooms",
+                label: "Available classrooms",
+                max: 50,
+                hint: "One room for each parallel batch",
+              },
+              {
+                key: "batches",
+                label: "Student batches",
+                max: 50,
+                hint: "Groups that follow their own timetable",
+              },
+              {
+                key: "maxClassesPerDay",
+                label: "Periods per day",
+                max: 8,
+                hint: "Monday to Friday · up to 8 periods",
+              },
+            ] as const
+          ).map(({ key, label, max, hint }) => (
+            <div key={key} className="space-y-2">
+              <Label htmlFor={key}>{label}</Label>
+              <input
+                className="field"
+                id={key}
+                type="number"
+                min={1}
+                max={max}
+                step={1}
+                required
+                value={Number.isNaN(value[key]) ? "" : value[key]}
+                onChange={(e) =>
+                  update({
+                    [key]: e.target.value === "" ? NaN : Number(e.target.value),
+                  })
+                }
+              />
+              <p className="text-xs text-muted-foreground">{hint}</p>
+            </div>
+          ))}
+          <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-4">
+            <CalendarIcon />
+            <div>
+              <p className="text-sm font-medium">A five-day learning week</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Subjects rotate evenly across the available periods.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="panel">
+        <div className="flex items-center gap-3 border-b px-6 py-5">
+          <span className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
+            <BookOpen className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="font-semibold">Subjects & curriculum</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Add the subjects you want to make time for
+            </p>
+          </div>
+          <span className="ml-auto text-xs text-muted-foreground">02</span>
+        </div>
+        <div className="space-y-4 p-6">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label htmlFor="new-subject" className="sr-only">
+                Subject name
+              </Label>
+              <input
+                className="field"
+                id="new-subject"
+                maxLength={60}
+                placeholder="Type a subject name…"
+                value={subject}
+                onChange={(e) => {
+                  setSubject(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    add();
+                  }
+                }}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11"
+              onClick={add}
+            >
+              <Plus /> Add<span className="hidden sm:inline"> subject</span>
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {value.subjects.map((name, i) => (
+              <span
+                key={name}
+                className="flex max-w-full items-center gap-2 rounded-lg border bg-slate-50 py-1.5 pl-3 pr-1.5 text-xs font-medium"
+              >
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${["bg-violet-500", "bg-blue-500", "bg-emerald-500", "bg-orange-400", "bg-pink-400"][i % 5]}`}
+                />
+                <span className="min-w-0 break-words">{name}</span>
+                <button
+                  type="button"
+                  className="rounded p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                  aria-label={`Remove ${name}`}
+                  onClick={() =>
+                    update({
+                      subjects: value.subjects.filter((s) => s !== name),
+                    })
+                  }
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {value.subjects.length
+              ? `${value.subjects.length} subjects added · Each subject gets a balanced share of the week.`
+              : "Your curriculum is empty. Add at least one subject to get started."}
+          </p>
+        </div>
+      </section>
+      {error && (
+        <p
+          role="alert"
+          className="notice border-red-200 bg-red-50 text-destructive"
+        >
+          {error}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            update(structuredClone(DEFAULT_PARAMETERS));
+            setSubject("");
+          }}
+        >
+          <RotateCcw /> Load example
+        </Button>
+        <Button disabled={disabled} className="h-11 px-6" type="submit">
+          Generate timetable <ArrowRight />
+        </Button>
+      </div>
+    </form>
+  );
+}
+function CalendarIcon() {
+  return (
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white text-sm font-semibold text-primary">
+      5
+    </span>
+  );
 }

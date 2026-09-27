@@ -1,179 +1,201 @@
-"use client"
+"use client";
+import { useState } from "react";
+import { CalendarDays, Download, Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DAYS, scheduleCsv, type Schedule } from "@/lib/scheduler";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { XIcon } from "lucide-react"
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
-export function ParameterForm() {
-  const [subjects, setSubjects] = useState<string[]>([])
-  const [newSubject, setNewSubject] = useState("")
-  const [parameters, setParameters] = useState({
-    classrooms: "",
-    batches: "",
-    maxClassesPerDay: "",
-    semester: "",
-    department: "",
-  })
-  const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setParameters({ ...parameters, [name]: value })
-  }
-
-  const addSubject = () => {
-    if (newSubject.trim() && !subjects.includes(newSubject.trim())) {
-      setSubjects([...subjects, newSubject.trim()])
-      setNewSubject("")
-    }
-  }
-
-  const removeSubject = (subjectToRemove: string) => {
-    // The parameter 's' now has an explicit type 'string'
-    setSubjects(subjects.filter((s: string) => s !== subjectToRemove))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setMessage(null)
-
-    // Validate required fields
-    if (!parameters.department.trim()) {
-      setError("Department is required")
-      return
-    }
-    if (!parameters.semester.trim()) {
-      setError("Semester is required")
-      return
-    }
-    if (!parameters.classrooms.trim() || parseInt(parameters.classrooms) <= 0) {
-      setError("Please enter a valid number of classrooms")
-      return
-    }
-    if (!parameters.batches.trim() || parseInt(parameters.batches) <= 0) {
-      setError("Please enter a valid number of batches")
-      return
-    }
-    if (!parameters.maxClassesPerDay.trim() || parseInt(parameters.maxClassesPerDay) <= 0) {
-      setError("Please enter a valid maximum classes per day")
-      return
-    }
-    if (subjects.length === 0) {
-      setError("Please add at least one subject")
-      return
-    }
-
-    // --- This is the missing logic ---
-    // You would send the data to your backend here.
-    // Example:
-    /*
-    try {
-      const response = await fetch('http://localhost:5000/api/parameters', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Include auth token if required
-          // 'Authorization': `Bearer ${your_auth_token}`
-        },
-        body: JSON.stringify({ ...parameters, subjects }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit parameters');
-      }
-
-      const result = await response.json();
-      setMessage('Parameters submitted successfully!');
-      console.log("Server response:", result);
-
-    } catch (err: any) {
-      setError(err.message);
-    }
-    */
-    console.log("Parameters submitted:", { ...parameters, subjects })
-    setMessage("Parameters submitted successfully (logged to console).")
-  }
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Scheduling Parameters</h2>
-        <p className="text-muted-foreground">Set the parameters for generating the class schedule.</p>
+const colors = [
+  "border-violet-200 bg-violet-50 text-violet-900",
+  "border-blue-200 bg-blue-50 text-blue-900",
+  "border-emerald-200 bg-emerald-50 text-emerald-900",
+  "border-amber-200 bg-amber-50 text-amber-900",
+  "border-rose-200 bg-rose-50 text-rose-900",
+];
+export function TimetableGenerator({
+  schedule,
+  onSetup,
+}: {
+  schedule: Schedule | null;
+  onSetup: () => void;
+}) {
+  const [batch, setBatch] = useState(0);
+  const [error, setError] = useState("");
+  const selectedBatch = schedule
+    ? Math.min(batch, schedule.parameters.batches - 1)
+    : 0;
+  if (!schedule)
+    return (
+      <div className="panel flex flex-col items-center px-6 py-20 text-center">
+        <span className="mb-5 rounded-2xl bg-violet-50 p-5 text-primary">
+          <CalendarDays className="h-9 w-9" />
+        </span>
+        <h2 className="text-xl font-semibold">Your week is a blank canvas</h2>
+        <p className="mb-6 mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+          Start with your department, rooms, and subjects. We’ll bring them
+          together into a weekly timetable.
+        </p>
+        <Button onClick={onSetup}>Set up a timetable</Button>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>General Parameters</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Input id="department" name="department" value={parameters.department} onChange={handleInputChange} placeholder="e.g., Computer Science" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="semester">Semester</Label>
-              <Input id="semester" name="semester" value={parameters.semester} onChange={handleInputChange} placeholder="e.g., 5th" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="classrooms">Number of Classrooms</Label>
-              <Input id="classrooms" name="classrooms" type="number" value={parameters.classrooms} onChange={handleInputChange} placeholder="e.g., 10" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="batches">Number of Batches</Label>
-              <Input id="batches" name="batches" type="number" value={parameters.batches} onChange={handleInputChange} placeholder="e.g., 4" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="maxClassesPerDay">Max Classes per Day</Label>
-              <Input id="maxClassesPerDay" name="maxClassesPerDay" type="number" value={parameters.maxClassesPerDay} onChange={handleInputChange} placeholder="e.g., 6" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Subjects</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Input
-                value={newSubject}
-                onChange={(e) => setNewSubject(e.target.value)}
-                placeholder="Add a new subject"
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubject(); } }}
-              />
-              <Button type="button" onClick={addSubject}>Add</Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {subjects.map((subject) => (
-                <div key={subject} className="flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-sm text-secondary-foreground">
-                  {subject}
-                  <button type="button" onClick={() => removeSubject(subject)} className="rounded-full hover:bg-destructive/80">
-                    <XIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end">
-          <Button type="submit">Generate Schedule</Button>
+    );
+  const exportCsv = () => {
+    setError("");
+    try {
+      const url = URL.createObjectURL(
+        new Blob(["\uFEFF" + scheduleCsv(schedule)], {
+          type: "text/csv;charset=utf-8;",
+        }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `acadence-semester-${schedule.parameters.semester}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setError("The download could not be created. Please try again.");
+    }
+  };
+  const lessons = schedule.lessons.filter((l) => l.batch === selectedBatch);
+  return (
+    <section className="panel overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b p-6">
+        <div className="min-w-0">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="eyebrow">Weekly timetable</span>
+            <span
+              className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${schedule.status === "approved" ? "bg-emerald-50 text-emerald-700" : schedule.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}
+            >
+              {schedule.status}
+            </span>
+          </div>
+          <h2 className="break-words text-xl font-semibold">
+            {schedule.parameters.department}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Semester {schedule.parameters.semester} · Monday – Friday
+          </p>
         </div>
-        {message && <p className="text-sm text-green-600">{message}</p>}
-        {error && <p className="text-sm text-red-600">{error}</p>}
-      </form>
-    </div>
-  )
+        <div className="no-print flex gap-2">
+          <Button variant="outline" onClick={exportCsv}>
+            <Download /> Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Print timetable"
+            onClick={() => window.print()}
+          >
+            <Printer />
+          </Button>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+        <div className="flex items-center gap-3">
+          <label htmlFor="batch-view" className="text-sm font-medium">
+            Viewing
+          </label>
+          <select
+            className="field !h-9 !w-auto"
+            id="batch-view"
+            value={selectedBatch}
+            onChange={(e) => setBatch(Number(e.target.value))}
+          >
+            {Array.from({ length: schedule.parameters.batches }, (_, i) => (
+              <option key={i} value={i}>
+                Batch {i + 1}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {lessons.length} periods per week · Room {selectedBatch + 1}
+        </p>
+      </div>
+      {error && (
+        <p role="alert" className="px-6 pb-3 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <div
+        className="overflow-x-auto px-4 pb-5"
+        tabIndex={0}
+        role="region"
+        aria-label="Weekly timetable, scroll horizontally on small screens"
+      >
+        <table className="w-full min-w-[700px] table-fixed border-separate border-spacing-2 text-left">
+          <caption className="sr-only">
+            Batch {selectedBatch + 1}, {schedule.parameters.department},
+            semester {schedule.parameters.semester}
+          </caption>
+          <thead>
+            <tr>
+              <th
+                scope="col"
+                className="w-20 p-2 text-xs font-medium text-muted-foreground"
+              >
+                PERIOD
+              </th>
+              {DAYS.map((day) => (
+                <th
+                  scope="col"
+                  className="p-2 text-xs font-semibold text-muted-foreground"
+                  key={day}
+                >
+                  {day}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from(
+              { length: schedule.parameters.maxClassesPerDay },
+              (_, period) => (
+                <tr key={period}>
+                  <th
+                    scope="row"
+                    className="px-2 text-xs font-medium text-muted-foreground"
+                  >
+                    <span className="block text-sm text-foreground">
+                      {String(period + 1).padStart(2, "0")}
+                    </span>
+                    Period
+                  </th>
+                  {DAYS.map((_, day) => {
+                    const lesson = lessons.find(
+                      (l) => l.day === day && l.period === period,
+                    )!;
+                    const color =
+                      colors[
+                        schedule.parameters.subjects.findIndex(
+                          (s) => s.trim() === lesson.subject,
+                        ) % colors.length
+                      ];
+                    return (
+                      <td
+                        key={day}
+                        className={`h-24 rounded-lg border p-3 align-top ${color}`}
+                      >
+                        <p className="break-words text-xs font-semibold leading-5">
+                          {lesson.subject}
+                        </p>
+                        <p className="mt-2 text-[10px] opacity-75">
+                          Room {lesson.room} · B{lesson.batch + 1}
+                        </p>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ),
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="border-t bg-slate-50 px-6 py-4 text-xs leading-5 text-muted-foreground">
+        Room and batch allocations are collision-free within this timetable.
+        Periods are sequence numbers; faculty availability, breaks, and shared
+        resources across timetables need separate review.
+      </p>
+    </section>
+  );
 }
