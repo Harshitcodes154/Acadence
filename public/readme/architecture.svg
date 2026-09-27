@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="446" viewBox="0 0 1200 446" role="img" aria-labelledby="title desc"><title id="title">Application architecture: scheduling and storage stay in the browser</title><desc id="desc">The browser UI passes validated settings to a deterministic scheduling engine and stores settings, schedules, and review notes in localStorage. Optional Firebase Authentication supplies identity only; schedules are not synchronized to Firestore.</desc><g font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#a293c7"/></marker></defs>
+  <rect x="0" y="0" width="1200" height="446" rx="22" fill="#f6f5fb" />
+  <text x="32" y="39" font-size="11" fill="#7660a9" font-weight="700" letter-spacing="2">INSIDE YOUR BROWSER</text>
+  <rect x="30" y="63" width="300" height="225" rx="16" fill="white" stroke="#e1dce9"/>
+  <text x="52" y="96" font-size="23" fill="#302942" font-weight="700" >Workspace</text><text x="52" y="121" font-size="13" fill="#81758f" font-weight="400" >Next.js · React · TypeScript</text>
+  <rect x="50" y="140" width="258" height="32" rx="7" fill="#f6f4fb" /><text x="65" y="161" font-size="13" fill="#5b4b72" font-weight="400" >Academic setup &amp; validation</text><rect x="50" y="184" width="258" height="32" rx="7" fill="#f6f4fb" /><text x="65" y="205" font-size="13" fill="#5b4b72" font-weight="400" >Batch timetable preview</text><rect x="50" y="228" width="258" height="32" rx="7" fill="#f6f4fb" /><text x="65" y="249" font-size="13" fill="#5b4b72" font-weight="400" >Review queue &amp; export</text>
+  <path d="M340 163h66" stroke="#a293c7" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="422" y="63" width="354" height="225" rx="16" fill="#282039" />
+  <text x="447" y="97" font-size="23" fill="white" font-weight="700" >Scheduling engine</text><text x="447" y="123" font-size="13" fill="#b6a7cc" font-weight="400" >Pure, deterministic functions</text>
+  <text x="447" y="164" font-size="14" fill="#b5a1f1" font-weight="400" >✓</text><text x="471" y="164" font-size="14" fill="#e1d8ee" font-weight="400" >Validate resource capacity</text><text x="447" y="192" font-size="14" fill="#b5a1f1" font-weight="400" >✓</text><text x="471" y="192" font-size="14" fill="#e1d8ee" font-weight="400" >Rotate subjects evenly</text><text x="447" y="220" font-size="14" fill="#b5a1f1" font-weight="400" >✓</text><text x="471" y="220" font-size="14" fill="#e1d8ee" font-weight="400" >Allocate one room per batch</text><text x="447" y="248" font-size="14" fill="#b5a1f1" font-weight="400" >✓</text><text x="471" y="248" font-size="14" fill="#e1d8ee" font-weight="400" >Serialize safe CSV output</text>
+  <path d="M788 163h66" stroke="#a293c7" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="871" y="63" width="299" height="225" rx="16" fill="white" stroke="#e1dce9"/>
+  <text x="895" y="97" font-size="23" fill="#302942" font-weight="700" >Local workspace</text><text x="895" y="123" font-size="13" fill="#81758f" font-weight="400" >Versioned localStorage</text>
+  <text x="895" y="169" font-size="14" fill="#5b4b72" font-weight="400" >Settings + schedule snapshots</text><text x="895" y="199" font-size="14" fill="#5b4b72" font-weight="400" >Drafts, decisions &amp; review notes</text><text x="895" y="244" font-size="12" fill="#9d6d40" font-weight="700" >No automatic cloud sync</text>
+  <path d="M180 299v26" stroke="#a293c7" stroke-width="2" stroke-dasharray="4 4"/>
+  <rect x="30" y="336" width="1140" height="80" rx="12" fill="#eeebf6" />
+  <rect x="50" y="353" width="96" height="23" rx="10" fill="#fff5de" /><text x="63" y="369" font-size="10" fill="#92692e" font-weight="700" >OPTIONAL</text>
+  <text x="166" y="368" font-size="17" fill="#554363" font-weight="700" >Firebase Authentication</text>
+  <text x="166" y="392" font-size="13" fill="#81758f" font-weight="400" >Email/password identity only. Authentication does not move schedules to Firestore.</text>
+</g></svg>
